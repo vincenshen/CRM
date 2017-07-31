@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% load alex_tags %}
+
+{% block body %}
+    <div class="container">
+        <ol class="breadcrumb">
+            <li><a href="/alex_admin/">Home</a></li>
+            <li><a href="/alex_admin/{{ app_name }}/">{{ app_name }}</a></li>
+            <li class="active">{{ model_name }}</li>
+            <li class="col-md-offset-8">
+                <a href="add/" class="btn btn-info">ADD {% get_model_verbose_name admin_class %}</a>
+            </li>
+        </ol>
+
+        <div class="content">
+            <h3>{{ model_name }}</h3>
+            {% if admin_class.search_fields %}
+                <div class="row search" style="margin-bottom: 10px">
+                    <form action="">
+                        <div class="col-md-2">
+                            <input type="text" name="search" class="form-control" value="{{ search_str }}"
+                                   placeholder="search keywords">
+                        </div>
+                        <div class="col-md-1">
+                            <button class="btn btn-danger">Search</button>
+                        </div>
+                    </form>
+                </div>
+            {% endif %}
+            {% if admin_class.list_filter %}
+                <div class="row filter">
+                    <form action="">
+                        {% for filter_column in admin_class.list_filter %}
+                            <div class="col-md-2">
+                                <p>{% get_field_verbose_name admin_class filter_column %}</p>
+                                <select class='form-control' name={{ filter_column }}>
+                                    {% build_filter_ele filter_column admin_class filter_conditions %}
+                                </select>
+                            </div>
+                        {% endfor %}
+                        <input type="text" name="search" style="display: none" value="{{ search_str }}">
+                        <div class="col-md-1">
+                            <button class="btn btn-danger search-button" style="margin-top: 29px">Filter</button>
+                        </div>
+
+                    </form>
+                </div>
+            {% endif %}
+            <div class="row">
+                <form action="" method="post">
+                    <div class="actions col-md-2" style="margin-top: 10px">
+                        <p>Action</p>
+                        <select name="_action" required="" class="form-control">
+                            <option value="" selected="selected">---------</option>
+                            {% get_action admin_class as actions %}
+                            {% for k, v in actions.items %}
+                                <option value="{{ k }}">{{ v }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-danger" style="margin-top: 39px">Go</button>
+                    </div>
+
+                    <div class="table-list col-md-12">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <td class="action-checkbox">
+                                    <input id="controlAll" class="action-select-all" type="checkbox">
+                                </td>
+                                {% if not admin_class.list_display %}
+                                    <th>{{ model_name }}</th>
+                                {% else %}
+                                    {% for column in admin_class.list_display %}
+                                        <th><a href="?_o={% if column == order_key %}{{ new_order_key }}{{ condition_str }}{% else %}{{ column }}{{ condition_str }}{% endif %}">{{ column }}</a>
+                                        </th>
+                                    {% endfor %}
+                                {% endif %}
+                            </tr>
+
+                            </thead>
+                            <tbody>
+                            {% for row in queryset %}
+                                <tr>
+                                    <td class="action-checkbox">
+                                        <input name="obj_id" class="action-select" type="checkbox" value="{{ row.id }}">
+                                    </td>
+                                    {% build_table_row row admin_class %}
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% csrf_token %}
+                </form>
+            </div>
+            <!--  //页码部分-->
+            <div class="col-md-offset-4">
+                <ul class="pagination">
+                    {{ paginator.page_str|safe }}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block bottom-js %}
+    <script>
+        $(".action-select-all").click(function () {
+            var mySelect = document.getElementById("controlAll").checked;
+            var checklist = document.getElementsByClassName("action-select");
+            if (mySelect) {
+                for (var i = 0; i < checklist.length; i++) {
+                    checklist[i].checked = true;
+                }
+            }
+            else {
+                for (var i = 0; i < checklist.length; i++) {
+                    checklist[i].checked = false;
+                }
+            }
+        });
+    </script>
+
+{% endblock %}

@@ -1,0 +1,93 @@
+{% load alex_tags %}
+
+<div class="container">
+    <ol class="breadcrumb">
+        <li><a href="/alex_admin/">Home</a></li>
+        <li><a href="/alex_admin/{{ app_name }}/">{{ app_name }}</a></li>
+        <li><a href="/alex_admin/{{ app_name }}/{{ model_name }}/">{{ model_name }}</a></li>
+        <li class="active">
+            {% if  form_obj.instance.id %}{{ form_obj.instance }}{% else %}添加{{ model_name }}{% endif %}</li>
+    </ol>
+    <form action="" class="form-horizontal" method="post">
+        {% for field in form_obj %}
+            <div class="form-group">
+                <label class="col-md-offset-1 col-md-2 control-label" for="">
+                    {% if field.field.required %}
+                        {{ field.name }}
+                    {% else %}
+                        <span style="font-weight: normal">{{ field.name }}</span>
+                    {% endif %}
+                </label>
+                <div class="col-md-6">
+                    {% if field.name in admin_class.filter_horizontal %}
+                        <div>
+                            {% get_selected_m2m_objects form_obj field.name as selected_m2m_objects %}
+                            {% get_unselected_m2m_objects admin_class field.name selected_m2m_objects as unselected_m2m_objects %}
+                            <div class="col-md-6">
+                                <input type="text" oninput="FuzzySearch(this)" class="form-control">
+                                <select id="{{ field.name }}_left" multiple class="form-control {{ field.name }}">
+                                    {% for obj in unselected_m2m_objects %}
+                                        <option value="{{ obj.id }}">{{ obj }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <select ele-type="right-select-ele" name="{{ field.name }}" id="{{ field.name }}_right"
+                                        multiple class="form-control {{ field.name }}">
+                                    {% for obj in selected_m2m_objects %}
+                                        <option value="{{ obj.id }}">{{ obj }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+                    <span style="color: gray; font-size: 10px;">{{ field.help_text }}</span>
+                    <span style="color: red">{{ field.errors.0 }}</span>
+                </div>
+            </div>
+        {% endfor %}
+        <div class="form-group">
+            {% if form_obj.instance.id %}
+                <div class="col-sm-1 col-md-offset-2 ">
+                    <a class="btn btn-danger" href="{% url 'obj_delete' app_name model_name  form_obj.instance.id %}">Delete</a>
+                </div>
+            {% endif %}
+            <div class="col-md-offset-8">
+                <input id="save" type="submit" class="btn btn-success" value="Save">
+            </div>
+        </div>
+        {% csrf_token %}
+    </form>
+</div>
+<script>
+    {% for field in form_obj %}
+        {% if field.name in admin_class.filter_horizontal %}
+            $(".{{ field.name }} option").dblclick(function () {
+                var option_id = $(this).parent().attr("id");
+                if (option_id == "{{ field.name }}_left") {
+                    $(this).appendTo("#{{ field.name }}_right");
+                } else {
+                    $(this).appendTo("#{{ field.name }}_left");
+                }
+            });
+        {% endif %}
+    {% endfor %}
+
+    $("#save").click(function () {
+        $("select[ele-type='right-select-ele'] option").prop("selected", true);
+    });
+
+    function FuzzySearch(self) {
+        var select_ele = $(self).next();
+        var search_text = $(self).val();
+        $(select_ele).children().each(function () {
+            if ($(this).text().indexOf(search_text) == -1){
+                $(this).addClass('hidden');
+            } else {
+                $(this).removeClass('hidden');
+            }
+        })
+    }
+</script>

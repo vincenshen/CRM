@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load alex_tags %}
+
+{% block body %}
+
+    <div class="container">
+        <h1>Are you sure?</h1>
+        <p>Are you sure you want to delete the {{ model_name }} "{{ obj }}"? All of the following related items will be deleted:</p>
+
+        {%  object_delete obj model_name %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="col-lg-1">
+                    <input type="submit" class="btn btn-danger" value="Yes, I'm sure">
+            </div>
+            <div class="col-lg-1 col-lg-offset-4">
+                <a href="/alex_admin/{{ app_name }}/{{ model_name }}/{{ obj.id }}/change" class="btn btn-info">No, take me back</a>
+            </div>
+        </form>
+    </div>
+
+
+{% endblock %}
